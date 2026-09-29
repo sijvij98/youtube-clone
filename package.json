@@ -1,0 +1,1 @@
+{"dependencies":{"next":"^14.2.5","react":"^18.3.1","react-dom":"^18.3.1"},"description":"A working YouTube clone (Next.js 14) powered by the YouTube Data API v3, with a built-in demo mode.","engines":{"node":">=18.17.0"},"name":"mytube-youtube-clone","private":true,"scripts":{"build":"next build","dev":"next dev","start":"next start"},"version":"1.0.0"}
