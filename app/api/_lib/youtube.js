@@ -74,6 +74,7 @@ function mapChannel(c) {
     subs: c.statistics?.subscriberCount ? Number(c.statistics.subscriberCount) : null,
     videoCount: c.statistics?.videoCount ? Number(c.statistics.videoCount) : null,
     description: s.description || "",
+    joinedAt: s.publishedAt || "",
   };
 }
 
@@ -220,7 +221,7 @@ export async function getVideo(id) {
   return { demo: false, video: mapVideo(v, extras), channel };
 }
 
-export async function getComments(videoId) {
+export async function getComments(videoId, order = "relevance") {
   if (isDemo()) {
     return { demo: true, items: DEMO_COMMENTS };
   }
@@ -228,7 +229,7 @@ export async function getComments(videoId) {
     part: "snippet",
     videoId,
     maxResults: 20,
-    order: "relevance",
+    order: order === "time" ? "time" : "relevance",
     textFormat: "plainText",
   });
   const items = (data.items || []).map((c) => {
@@ -306,6 +307,97 @@ export async function getChannelVideos(channelId) {
   const vd = await yt("videos", { part: "snippet,contentDetails,statistics", id: ids.join(",") });
   const extras = await channelExtras([channelId]);
   return { demo: false, items: (vd.items || []).map((v) => mapVideo(v, extras)) };
+}
+
+// Trending shorts: search for short-form videos, then enrich exactly like
+// getChannelVideos (videos.list for durations/stats + channelExtras for avatars).
+export async function getShorts() {
+  if (isDemo()) {
+    return { demo: true, items: DEMO_VIDEOS.slice(0, 6).map(demoVideoShape) };
+  }
+  const data = await yt("search", {
+    part: "snippet",
+    type: "video",
+    videoDuration: "short",
+    order: "viewCount",
+    regionCode: "IN",
+    maxResults: 18,
+  });
+  const ids = (data.items || []).map((i) => i.id?.videoId).filter(Boolean);
+  if (!ids.length) return { demo: false, items: [] };
+  const vd = await yt("videos", { part: "snippet,contentDetails,statistics", id: ids.join(",") });
+  const channelIds = [...new Set((vd.items || []).map((v) => v.snippet?.channelId).filter(Boolean))];
+  const extras = await channelExtras(channelIds);
+  return { demo: false, items: (vd.items || []).map((v) => mapVideo(v, extras)) };
+}
+
+// A channel's shorts: newest first, same enrichment as getChannelVideos.
+export async function getChannelShorts(channelId) {
+  if (isDemo()) {
+    const items = DEMO_VIDEOS.filter((v) => v.channelId === channelId)
+      .slice(0, 6)
+      .map(demoVideoShape);
+    return { demo: true, items };
+  }
+  const data = await yt("search", {
+    part: "snippet",
+    channelId,
+    order: "date",
+    type: "video",
+    videoDuration: "short",
+    maxResults: 12,
+  });
+  const ids = (data.items || []).map((i) => i.id?.videoId).filter(Boolean);
+  if (!ids.length) return { demo: false, items: [] };
+  const vd = await yt("videos", { part: "snippet,contentDetails,statistics", id: ids.join(",") });
+  const extras = await channelExtras([channelId]);
+  return { demo: false, items: (vd.items || []).map((v) => mapVideo(v, extras)) };
+}
+
+// A channel's playlists. No demo data for playlists yet, so demo returns [].
+export async function getChannelPlaylists(channelId) {
+  if (isDemo()) {
+    return { demo: true, items: [] };
+  }
+  const data = await yt("playlists", {
+    part: "snippet,contentDetails",
+    channelId,
+    maxResults: 25,
+  });
+  const items = (data.items || []).map((p) => ({
+    id: p.id,
+    title: p.snippet?.title || "",
+    description: p.snippet?.description || "",
+    thumbnail: bestThumb(p.snippet?.thumbnails),
+    itemCount: Number(p.contentDetails?.itemCount || 0),
+    publishedAt: p.snippet?.publishedAt || "",
+  }));
+  return { demo: false, items };
+}
+
+// Replies to a top-level comment. Demo has no reply data, so demo returns [].
+export async function getReplies(parentId) {
+  if (isDemo()) {
+    return { demo: true, items: [] };
+  }
+  const data = await yt("comments", {
+    part: "snippet",
+    parentId,
+    maxResults: 10,
+    textFormat: "plainText",
+  });
+  const items = (data.items || []).map((c) => {
+    const s = c.snippet || {};
+    return {
+      id: c.id,
+      author: s.authorDisplayName || "",
+      authorAvatar: s.authorProfileImageUrl || "",
+      text: s.textDisplay || "",
+      likes: Number(s.likeCount || 0),
+      publishedAt: s.publishedAt || "",
+    };
+  });
+  return { demo: false, items };
 }
 
 // Bulk-fetch channel avatars (+ keep the full channel object for stats reuse).

@@ -1,44 +1,75 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import SearchBar from "./SearchBar";
+import NotificationsBell from "./NotificationsBell";
+import AvatarMenu from "./AvatarMenu";
+import { MenuIcon, MicIcon } from "./icons";
 
 export default function Header({ onMenu, demo }) {
-  const router = useRouter();
-  const [q, setQ] = useState("");
+  const [voiceOK, setVoiceOK] = useState(false);
+  const [listening, setListening] = useState(false);
+  const searchRef = useRef(null);
 
-  const submit = (e) => {
-    e.preventDefault();
-    const query = q.trim();
-    if (query) router.push(`/results?search_query=${encodeURIComponent(query)}`);
+  useEffect(() => {
+    const w = typeof window !== "undefined" ? window : null;
+    setVoiceOK(!!(w && (w.SpeechRecognition || w.webkitSpeechRecognition)));
+  }, []);
+
+  const startVoice = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const rec = new SR();
+    rec.lang = "en-IN";
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+    setListening(true);
+    rec.onresult = (e) => {
+      const text = e.results?.[0]?.[0]?.transcript || "";
+      if (text.trim() && searchRef.current) {
+        searchRef.current.search(text.trim());
+      }
+    };
+    rec.onerror = () => setListening(false);
+    rec.onend = () => setListening(false);
+    try {
+      rec.start();
+    } catch {
+      setListening(false);
+    }
   };
 
   return (
     <header className="header">
-      <button className="icon-btn" onClick={onMenu} aria-label="Toggle menu">
-        ☰
-      </button>
-      <Link className="logo" href="/" aria-label="MyTube home">
-        <span className="logo-play" />
-        <span className="logo-text">MyTube</span>
-      </Link>
-      {demo && <span className="demo-pill">DEMO</span>}
-      <div className="header-center">
-        <form className="searchbar" onSubmit={submit} role="search">
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search videos and channels"
-            aria-label="Search"
-          />
-          <button type="submit" aria-label="Search">
-            ⌕
-          </button>
-        </form>
+      <div className="header-left">
+        <button className="icon-btn" onClick={onMenu} aria-label="Toggle menu">
+          <MenuIcon />
+        </button>
+        <Link className="logo" href="/" aria-label="MyTube home">
+          <span className="logo-play" />
+          <span className="logo-text">MyTube</span>
+          <sup>IN</sup>
+        </Link>
       </div>
-      {/* spacer keeps the search bar visually centered */}
-      <div style={{ width: 40, flex: "none" }} />
+      <div className="header-center">
+        <SearchBar ref={searchRef} />
+        {voiceOK && (
+          <button
+            className={`mic-btn${listening ? " listening" : ""}`}
+            onClick={startVoice}
+            aria-label="Search by voice"
+            title="Search by voice"
+          >
+            <MicIcon size={20} />
+          </button>
+        )}
+      </div>
+      <div className="header-right">
+        <NotificationsBell />
+        <AvatarMenu />
+        {demo && <span className="demo-pill">DEMO</span>}
+      </div>
     </header>
   );
 }

@@ -1,5 +1,8 @@
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import AppShell from "../components/AppShell";
+
+const roboto = Roboto({ weight: ["400", "500", "700"], subsets: ["latin"] });
 
 export const metadata = {
   title: "MyTube",
@@ -9,7 +12,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={roboto.className}>
         <AppShell>{children}</AppShell>
       </body>
     </html>
