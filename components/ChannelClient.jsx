@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Avatar from "./Avatar";
 import VideoCard from "./VideoCard";
+import HoverPreview from "./HoverPreview";
 import { ChannelSkeleton } from "./Skeletons";
 import { PlaylistIcon } from "./icons";
 import { formatCount, formatViews, timeAgo, formatDate, formatDuration } from "../lib/format";
@@ -165,13 +166,18 @@ export default function ChannelClient({ channelId }) {
           {featured && (
             <Link href={`/watch?v=${featured.id}`} className="ch-home-featured">
               <div className="thumb-wrap">
-                <img src={featured.thumbnail} alt="" loading="lazy" />
-                {featured.demo && <span className="demo-tag">DEMO</span>}
-                {featured.durationSec > 0 && (
-                  <span className="duration">
-                    {formatDuration(featured.durationSec)}
-                  </span>
-                )}
+                <HoverPreview
+                  videoId={featured.id}
+                  thumbnail={featured.thumbnail}
+                  demo={featured.demo}
+                  durationLabel={
+                    featured.durationSec > 0 && (
+                      <span className="duration">
+                        {formatDuration(featured.durationSec)}
+                      </span>
+                    )
+                  }
+                />
               </div>
               <div style={{ minWidth: 0 }}>
                 <h3>{featured.title}</h3>

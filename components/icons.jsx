@@ -109,6 +109,12 @@ export const TheaterIcon = ({ size = 20 }) =>
 export const FullscreenIcon = ({ size = 20 }) =>
   base(size, <><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></>);
 
+export const MuteIcon = ({ size = 20 }) =>
+  base(size, <><path d="M11 5L6.5 9H3v6h3.5L11 19V5z" fill="currentColor" stroke="none" /><line x1="15" y1="9" x2="21" y2="15" /><line x1="21" y1="9" x2="15" y2="15" /></>);
+
+export const UnmuteIcon = ({ size = 20 }) =>
+  base(size, <><path d="M11 5L6.5 9H3v6h3.5L11 19V5z" fill="currentColor" stroke="none" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M18.2 6a9 9 0 0 1 0 12" /></>);
+
 export const VolumeIcon = ({ size = 20 }) =>
   base(size, <><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none" /><path d="M16 9a4 4 0 0 1 0 6" /></>);
 

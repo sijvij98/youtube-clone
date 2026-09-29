@@ -308,6 +308,28 @@ input { font-family: inherit; }
 .thumb-wrap { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius-lg); overflow: hidden; background: #1c1c1c; }
 .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.25s ease; }
 .card:hover .thumb-wrap img { transform: scale(1.03); }
+/* Hover video preview — fills the thumbnail, swaps still for a muted
+   autoplaying embed. The iframe is pointer-transparent so a click still
+   opens the watch page; only the mute button is clickable. */
+.hover-preview { position: absolute; inset: 0; }
+.hover-preview img { width: 100%; height: 100%; object-fit: cover; }
+.hover-iframe {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border: 0; pointer-events: none; background: #000;
+}
+.hover-mute {
+  position: absolute; right: 8px; bottom: 8px; z-index: 2;
+  width: 34px; height: 34px; border: 0; border-radius: 50%;
+  background: rgba(0,0,0,0.72); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.15s ease, transform 0.15s ease;
+  animation: hover-mute-in 0.18s ease;
+}
+.hover-mute:hover { background: rgba(0,0,0,0.92); transform: scale(1.06); }
+@keyframes hover-mute-in {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
 .duration {
   position: absolute; right: 6px; bottom: 6px;
   background: rgba(0,0,0,0.82); color: #fff;
